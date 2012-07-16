@@ -528,7 +528,7 @@ Authen::Captcha - Perl extension for creating captcha's to verify the human elem
   # set the data_folder. contains flatfile db to maintain state
   $captcha->data_folder('/some/folder');
 
-  # set directory to hold publicly accessable images
+  # set directory to hold publicly accessible images
   $captcha->output_folder('/some/http/folder');
 
   # Alternitively, any of the methods to set variables may also be
@@ -661,11 +661,11 @@ $results will be one of:
 =item C<$captcha-E<gt>data_folder( '/some/folder' );>
 
 Required. Sets the directory to hold the flatfile database that will be used to store the current non-expired valid captcha tokens.
-Must be writable by the process running the script (usually the web server user, which is usually either "apache" or "http"), but should not be accessable to the end user.
+Must be writable by the process running the script (usually the web server user, which is usually either "apache" or "http"), but should not be accessible to the end user.
 
 =item C<$captcha-E<gt>output_folder( '/some/folder' );>
 
-Required. Sets the directory to hold the generated Captcha image files. This is usually a web accessable directory so that the user can view the images in here, but it doesn't have to be web accessable (you could be attaching the images to an e-mail for some verification, or some other Captcha implementation).
+Required. Sets the directory to hold the generated Captcha image files. This is usually a web accessible directory so that the user can view the images in here, but it doesn't have to be web accessible (you could be attaching the images to an e-mail for some verification, or some other Captcha implementation).
 Must be writable by the process running the script (usually the web server user, which is usually either "apache" or "http").
 
 =item C<$captcha-E<gt>images_folder( '/some/folder' );>
