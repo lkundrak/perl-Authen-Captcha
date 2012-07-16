@@ -8,7 +8,7 @@ WriteMakefile(
     'PREREQ_PM'		=> {
 	                    'File::Spec'	=> 0,
 	                    'File::Basename'	=> 0,
-	                    'Digest::MD5'	=> 0,
+	                    'String::Random'	=> 0,
 	                    'GD'	=> 0,
 	                   },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005

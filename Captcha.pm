@@ -9,7 +9,7 @@ package Authen::Captcha;
 use 5.00503;
 use strict;
 use GD;
-use Digest::MD5 qw(md5_hex);
+use String::Random qw(random_regex);
 use Carp;
 # these are used to find default images dir
 use File::Basename;
@@ -197,14 +197,15 @@ sub data_folder
 sub check_code 
 {
 	ref(my $self = shift) or croak "instance variable needed";
-	my ($code, $crypt) = @_;
+	my ($code, $token) = @_;
 
 	$code = lc($code);
 	
-	warn "$code  $crypt\n" if($self->debug() >= 2);
+	warn "$code  $token\n" if($self->debug() >= 2);
 
 	my $current_time = time;
-	my $return_value = 0;
+	# solution was not found in database (well, yet :)
+	my $return_value = -2;
 	my $database_file = File::Spec->catfile($self->data_folder(),"codes.txt");
 
 	# create database file if it doesn't already exist
@@ -214,8 +215,6 @@ sub check_code
 	# they could be confused with (o) and (l), so we swap them in
 	$code =~ tr/01/ol/;
 
-	my $md5 = md5_hex($code);
-	
 	# pull in current database
 	warn "Open File: $database_file\n" if($self->debug() >= 2);
 	open (DATA, "<$database_file")  or die "Can't open File: $database_file\n";
@@ -228,59 +227,56 @@ sub check_code
 	# $new_data will hold the part of the database we want to keep and 
 	# write back out
 	my $new_data = "";
-	my $found;
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
-		my ($data_time,$data_code) = split(/::/,$line);
-		
-		my $png_file = File::Spec->catfile($self->output_folder(),$data_code . ".png");
-		if ($data_code eq $crypt)
+		my ($data_time,$data_token,$data_code) = split(/::/,$line);
+
+		my $png_file = File::Spec->catfile($self->output_folder(),$data_token . ".png");
+		if ($data_token eq $token)
 		{
-			# the crypt was found in the database
+
+			# the token was found in the database
 			if (($current_time - $data_time) > $self->expire())
 			{ 
 				 warn "Crypt Found But Expired\n" if($self->debug() >= 2);
-				# the crypt was found but has expired
+				# the token was found but has expired
 				$return_value = -1;
 			} else {
-				warn "Match Crypt in File Crypt: $crypt\n" if($self->debug() >= 2);
-				$found = 1;
+				warn "Match Crypt in File Crypt: $token\n" if($self->debug() >= 2);
 			}
-			if ( ($md5 ne $crypt) && ($return_value != -1) && $self->keep_failures())
-			{	# solution was wrong, not expired, and we're keeping failures
+
+			if ( ($data_code eq $code) && ($return_value != -1) )
+			{
+				warn "Match: " . $data_token . " And " . $token . "\n" if($self->debug() >= 2);
+				# solution was correct and was found in database - passed
+				$return_value = 1;
+			}
+
+			if ( $return_value < ($self->keep_failures() ? -1 : -2) )
+			{
+				warn "No Match: " . $data_token . " And " . $token . "\n" if($self->debug() >= 2);
+				# solution was wrong, not expired, and we're keeping failures
 				$new_data .= $line."\n";
 			} else {
-				# remove the found crypt so it can't be used again
+				# remove the found token so it can't be used again
 				warn "Unlink File: " . $png_file . "\n" if($self->debug() >= 2);
 				unlink($png_file) or carp("Can't remove png file [$png_file]\n");
 			}
+
+			if ( $return_value == -2 ) {
+				# incorrect solution
+				$return_value = -3;
+			}
+
 		} elsif (($current_time - $data_time) > $self->expire()) {
-			# removed expired crypt
+			# removed expired token
 			warn "Removing Expired Crypt File: " . $png_file ."\n" if($self->debug() >= 2);
 			unlink($png_file) or carp("Can't remove png file [$png_file]\n");
 		} else {
-			# crypt not found or expired, keep it
+			# token not found or expired, keep it
 			$new_data .= $line."\n";
 		}
-	}
-
-	if ($md5 eq $crypt)
-	{
-		warn "Match: " . $md5 . " And " . $crypt . "\n" if($self->debug() >= 2);
-		# solution was correct
-		if ($found)
-		{
-			# solution was correct and was found in database - passed
-			$return_value = 1;
-		} elsif (!$return_value) {
-			# solution was not found in database
-			$return_value = -2;
-		}
-	} else {
-		warn "No Match: " . $md5 . " And " . $crypt . "\n" if($self->debug() >= 2);
-		# incorrect solution
-		$return_value = -3;
 	}
 
 	# update database
@@ -331,7 +327,7 @@ sub _save_code
 {
 	ref(my $self = shift) or croak "instance variable needed";
 	my $code = shift;
-	my $md5 = shift;
+	my $token = shift;
 
 	my $database_file = File::Spec->catfile($self->data_folder(),'codes.txt');
 
@@ -351,11 +347,11 @@ sub _save_code
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
-		my ($data_time,$data_code) = split(/::/,$line);
+		my ($data_time,$data_token,$data_code) = split(/::/,$line);
 		if ( (($current_time - $data_time) > ($self->expire())) ||
-		     ($data_code  eq $md5) )
+		     ($data_token  eq $token) )
 		{	# remove expired captcha, or a dup
-			my $png_file = File::Spec->catfile($self->output_folder(),$data_code . ".png");
+			my $png_file = File::Spec->catfile($self->output_folder(),$data_token . ".png");
 			unlink($png_file) or carp("Can't remove png file [$png_file]\n");
 		} else {
 			$new_data .= $line."\n";
@@ -367,9 +363,9 @@ sub _save_code
 	open(DATA,">$database_file")  or die "Can't open File: $database_file\n";
 		flock DATA, 2; # write lock
 		warn "-->>" . $new_data . "\n" if($self->debug() >= 2);
-		warn "-->>" . $current_time . "::" . $md5."\n" if($self->debug() >= 2);
+		warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
 		print DATA $new_data;
-		print DATA $current_time."::".$md5."\n";
+		print DATA $current_time."::".$token."::".$code."\n";
 	close(DATA);
 	warn "Close File: $database_file\n" if($self->debug() >= 2);
 
@@ -379,7 +375,6 @@ sub create_image_file
 {
 	ref(my $self = shift) or croak "instance variable needed";
 	my $code = shift;
-	my $md5 = shift;
 
 	my $length = length($code);
 	my $im_width = $self->width();
@@ -447,7 +442,6 @@ sub create_sound_file
 {
 	ref(my $self = shift) or croak "instance variable needed";
 	my $code = shift;
-	my $md5 = shift;
 	my $length = length($code);
 
 	my @chars = split('',$code);
@@ -490,25 +484,25 @@ sub generate_code
 	my $length = shift;
 
 	my $code = $self->generate_random_string($length);
-	my $md5 = md5_hex($code);
+	my $token = random_regex('[a-f0-9]{32}');
 
 	my ($captcha_data_ref,$output_filename);
 	if ($self->type() eq 'image')
 	{
-		$captcha_data_ref = $self->create_image_file($code,$md5);
-		$output_filename = File::Spec->catfile($self->output_folder(),$md5 . ".png");
+		$captcha_data_ref = $self->create_image_file($code);
+		$output_filename = File::Spec->catfile($self->output_folder(),$token . ".png");
 	} elsif ($self->type() eq 'sound') {
-		$captcha_data_ref = $self->create_sound_file($code,$md5);
-		$output_filename = File::Spec->catfile($self->output_folder(),$md5 . ".wav");
+		$captcha_data_ref = $self->create_sound_file($code);
+		$output_filename = File::Spec->catfile($self->output_folder(),$token . ".wav");
 	} else {
 		croak "invalid captcha type [" . $self->type() . "]";
 	}
 
 	$self->_save_file($captcha_data_ref,$output_filename);
-	$self->_save_code($code,$md5);
+	$self->_save_code($code,$token);
 
-	# return crypt (md5)... or, if they want it, the code as well.
-	return wantarray ? ($md5,$code) : $md5;
+	# return token (token)... or, if they want it, the code as well.
+	return wantarray ? ($token,$code) : $token;
 }
 
 sub version
@@ -545,19 +539,19 @@ Authen::Captcha - Perl extension for creating captcha's to verify the human elem
     output_folder => '/some/http/folder',
     );
 
-  # create a captcha. Image filename is "$md5sum.png"
-  my $md5sum = $captcha->generate_code($number_of_characters);
+  # create a captcha. Image filename is "$token.png"
+  my $token = $captcha->generate_code($number_of_characters);
 
   # check for a valid submitted captcha
   #   $code is the submitted letter combination guess from the user
-  #   $md5sum is the submitted md5sum from the user (that we gave them)
-  my $results = $captcha->check_code($code,$md5sum);
+  #   $token is the submitted token from the user (that we gave them)
+  my $results = $captcha->check_code($code,$token);
   # $results will be one of:
   #          1 : Passed
   #          0 : Code not checked (file error)
   #         -1 : Failed: code expired
   #         -2 : Failed: invalid code (not in database)
-  #         -3 : Failed: invalid code (code does not match crypt)
+  #         -3 : Failed: invalid code (code does not match token)
   ##############
 
 =head1 ABSTRACT
@@ -629,26 +623,26 @@ See the method descriptions for more detail on what they mean.
 
 =back
 
-=item C<$md5sum = $captcha-E<gt>generate_code( $number_of_characters );>
+=item C<$token = $captcha-E<gt>generate_code( $number_of_characters );>
 
-Creates a captcha. Image filename is "$md5sum.png"
+Creates a captcha. Image filename is "$token.png"
 
 It can also be called in array context to retrieve the string of characters used to generate the captcha (the string the user is expected to respond with). This is useful for debugging.
 ex.
 
-C<($md5sum,$chars) = $captcha-E<gt>generate_code( $number_of_characters );>
+C<($token,$chars) = $captcha-E<gt>generate_code( $number_of_characters );>
 
-=item C<$results = $captcha-E<gt>check_code($code,$md5sum);>
+=item C<$results = $captcha-E<gt>check_code($code,$token);>
 
 check for a valid submitted captcha
 
 $code is the submitted letter combination guess from the user
 
-$md5sum is the submitted md5sum from the user (that we gave them)
+$token is the submitted token from the user (that we gave them)
 
-If the $code and $md5sum are correct, the image file and database entry will be removed.
+If the $code and $token are correct, the image file and database entry will be removed.
 
-If the $md5sum matches one in the database, and "keep_failures" is false (the default), the image file and database entry will be removed to avoid repeated attempts on the same captcha.
+If the $token matches one in the database, and "keep_failures" is false (the default), the image file and database entry will be removed to avoid repeated attempts on the same captcha.
 
 $results will be one of:
 
@@ -656,7 +650,7 @@ $results will be one of:
     0 : Code not checked (file error)
    -1 : Failed: code expired
    -2 : Failed: invalid code (not in database)
-   -3 : Failed: invalid code (code does not match crypt)
+   -3 : Failed: invalid code (code does not match token)
 
 =back
 
@@ -666,7 +660,7 @@ $results will be one of:
 
 =item C<$captcha-E<gt>data_folder( '/some/folder' );>
 
-Required. Sets the directory to hold the flatfile database that will be used to store the current non-expired valid captcha md5sum's.
+Required. Sets the directory to hold the flatfile database that will be used to store the current non-expired valid captcha tokens.
 Must be writable by the process running the script (usually the web server user, which is usually either "apache" or "http"), but should not be accessable to the end user.
 
 =item C<$captcha-E<gt>output_folder( '/some/folder' );>
