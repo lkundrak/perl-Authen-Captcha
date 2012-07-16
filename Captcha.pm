@@ -230,7 +230,8 @@ sub check_code
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
-		my ($data_time,$data_token,$data_code) = split(/::/,$line);
+		my ($data_time,$data_token,$data_code) = $line =~ m/(^\d+)::([a-f0-9]{32})::(.*)$/
+			or next;
 
 		my $png_file = File::Spec->catfile($self->output_folder(),$data_token . ".png");
 		if ($data_token eq $token)
@@ -347,7 +348,8 @@ sub _save_code
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
-		my ($data_time,$data_token,$data_code) = split(/::/,$line);
+		my ($data_time,$data_token,$data_code) = $line =~ m/(^\d+)::([a-f0-9]{32})::(.*)$/
+			or next;
 		if ( (($current_time - $data_time) > ($self->expire())) ||
 		     ($data_token  eq $token) )
 		{	# remove expired captcha, or a dup
