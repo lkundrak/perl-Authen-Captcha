@@ -11,7 +11,7 @@ WriteMakefile(
 	                    'String::Random'	=> 0,
 	                    'GD'	=> 0,
 	                   },
-    ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
+    ($] >= 5.008 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'Captcha.pm', # retrieve abstract from module
        AUTHOR     => 'Seth T. Jackson <sjackson@purifieddata.net>') : ()),
 );
