@@ -556,7 +556,7 @@ Authen::Captcha - Perl extension for creating captcha's to verify the human elem
 
 =head1 ABSTRACT
 
-Authen::Captcha provides an object oriented interface to captcha file creations.  Captcha stands for Completely Automated Public Turning test to tell Computers and Humans Apart. A Captcha is a program that can generate and grade tests that:
+Authen::Captcha provides an object oriented interface to captcha file creations.  Captcha stands for Completely Automated Public Turing test to tell Computers and Humans Apart. A Captcha is a program that can generate and grade tests that:
 
     - most humans can pass.
     - current computer programs can't pass
