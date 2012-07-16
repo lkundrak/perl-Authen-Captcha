@@ -217,8 +217,8 @@ sub check_code
 
 	# pull in current database
 	warn "Open File: $database_file\n" if($self->debug() >= 2);
+	$self->_get_exclusive_lock();
 	open (DATA, "<$database_file")  or die "Can't open File: $database_file\n";
-		flock DATA, 1;  # read lock
 		my @data=<DATA>;
 	close(DATA);
 	warn "Close File: $database_file\n" if($self->debug() >= 2);
@@ -282,11 +282,42 @@ sub check_code
 
 	# update database
 	open(DATA,">$database_file")  or die "Can't open File: $database_file\n";
-		flock DATA, 2; # write lock 
 		print DATA $new_data;
 	close(DATA);
+	$self->_release_lock();
 	
 	return $return_value;
+}
+
+
+sub _open_lock_file {
+	my $self = shift;
+	my $file_name = shift;
+	open(LOCK, ">>$file_name") or die "Error opening lockfile $file_name: $!\n";
+}
+
+sub _get_shared_lock {
+	my $self = shift;
+	my $lock_file_name = File::Spec->catfile($self->data_folder(),"codes.lock");
+	$self->_open_lock_file($lock_file_name);
+
+	# shared lock
+	flock(LOCK, 1) or die "Error locking lockfile in shared mode: $!\n";
+}
+
+sub _get_exclusive_lock {
+	my $self = shift;
+	my $lock_file_name = File::Spec->catfile($self->data_folder(),"codes.lock");
+	$self->_open_lock_file($lock_file_name);
+
+	# exclusive lock
+	flock(LOCK, 2) or die "Error locking lockfile exclusively: $!\n";
+}
+
+sub _release_lock {
+	my $self = shift;
+	flock(LOCK, 8) or die "Error unlocking lockfile: $!\n";
+	close(LOCK);
 }
 
 sub _touch_file
@@ -339,8 +370,9 @@ sub _save_code
 	$self->_touch_file($database_file);
 
 	# clean expired codes and images
+	$self->_get_exclusive_lock();
+
 	open (DATA, "<$database_file")  or die "Can't open File: $database_file\n";
-		flock DATA, 1;  # read lock
 		my @data=<DATA>;
 	close(DATA);
 	
@@ -363,14 +395,13 @@ sub _save_code
 	# save the code to database
 	warn "open File: $database_file\n" if($self->debug() >= 2);
 	open(DATA,">$database_file")  or die "Can't open File: $database_file\n";
-		flock DATA, 2; # write lock
 		warn "-->>" . $new_data . "\n" if($self->debug() >= 2);
 		warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
 		print DATA $new_data;
 		print DATA $current_time."::".$token."::".$code."\n";
 	close(DATA);
+	$self->_release_lock();
 	warn "Close File: $database_file\n" if($self->debug() >= 2);
-
 }
 
 sub create_image_file
