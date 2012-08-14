@@ -39,7 +39,7 @@ SYNOPSIS
 
 ABSTRACT
     Authen::Captcha provides an object oriented interface to captcha file
-    creations. Captcha stands for Completely Automated Public Turning test
+    creations. Captcha stands for Completely Automated Public Turing test
     to tell Computers and Humans Apart. A Captcha is a program that can
     generate and grade tests that:
 

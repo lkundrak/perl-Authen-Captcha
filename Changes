@@ -1,5 +1,9 @@
 Revision history for Perl extension Authen::Captcha.
 
+2015-05-xx xx:xx  Paulo Custodio
+
+	* Fix #104697: Spelling in README
+
 2012-07-14 12:19  Lubomir Rintel
 
 	* Captcha.pm: Hardcode version, don't get it from CVS.  Advise to use
