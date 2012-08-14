@@ -17,7 +17,7 @@ use File::Spec;
 
 use vars qw($VERSION);
 
-$VERSION = sprintf "%d.%03d", q$Revision: 1.23 $ =~ /(\d+)/g;
+$VERSION = '1.024';
 
 # get our file name, used to find the default images
 my $default_images_folder;
@@ -587,6 +587,10 @@ Authen::Captcha - Perl extension for creating captcha's to verify the human elem
   #         -3 : Failed: invalid code (code does not match token)
   ##############
 
+=head1 WARNING
+
+The captcha produced by this module is rather weak compared to other modules available. You are advised to update to L<GD::SecurityImage>, which provides API-compatible interface in L<GD::SecurityImage::AC> module.
+
 =head1 ABSTRACT
 
 Authen::Captcha provides an object oriented interface to captcha file creations.  Captcha stands for Completely Automated Public Turing test to tell Computers and Humans Apart. A Captcha is a program that can generate and grade tests that:
@@ -749,11 +753,15 @@ Josh I. Miller, E<lt>jmiller@purifieddata.netE<gt>
 
 First Productions, Inc. created the cgi-script distributed under the GPL which was used as the basis for this module. Much work has gone into making this more robust, and suitable for other applications, but much of the origonal code remains.
 
+Fixes were reported and contributed by various people, see Changes file for a complete list.
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 2003, First Productions, Inc. (FIRSTPRODUCTIONS HUMAN TEST 1.0)
 
 Copyright 2003 by Seth Jackson
+
+Copyright 2012 by Paolo Rossi, Lubomir Rintel, Chris Dunlop, Gert Schepens and Ernesto Hernández-Novich
 
 This library is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. (see license.txt).
 

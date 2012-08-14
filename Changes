@@ -1,5 +1,37 @@
 Revision history for Perl extension Authen::Captcha.
 
+2012-07-14 12:19  Lubomir Rintel
+
+	* Captcha.pm: Hardcode version, don't get it from CVS.  Advise to use
+	GD::SecurityImage.
+	* Makefile.PM: Point to Git for now
+	* Changes: updated changes - tagged as Rel-1_024
+
+2012-06-16 18:25  Lubomir Rintel
+
+	* Makefile.PL: 5.005 is not really supported
+
+2012-06-16 18:18  Paolo Rossi
+
+	* Captcha.pm: Broken locking lets images files build up
+
+2012-06-16 18:12  Lubomir Rintel
+
+	* Makefile.PL: Fix File::Spec requirement
+
+2012-06-16 18:09  Chris Dunlop
+
+	* Captcha.pm: Fix reading of codes database in taint mode
+
+2012-06-16 18:01  Ernesto Hernández-Novich
+
+	* Captcha.pm: Spelling fix
+
+2012-06-16 17:54  Lubomir Rintel
+
+	* Captcha.pm, Makefile.PL: Use Random tokens instead of MD5
+	checksums
+
 2003-12-17 23:47  jmiller
 
 	* Changes: updated changes - tagged as Rel-1_023
