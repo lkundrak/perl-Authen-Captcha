@@ -547,6 +547,8 @@ sub version
 __END__
 # Below is stub documentation for your module. You'd better edit it!
 
+=encoding utf8
+
 =head1 NAME
 
 Authen::Captcha - Perl extension for creating captcha's to verify the human element in transactions.
