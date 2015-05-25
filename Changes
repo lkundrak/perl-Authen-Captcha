@@ -3,7 +3,7 @@ Revision history for Perl extension Authen::Captcha.
 2015-05-xx xx:xx  Paulo Custodio
 
 	* Fix #104697: Spelling in README
-	* Fix #93798 - pod encoding
+	* Fix #93798:  pod encoding
 	* Fix #104698: Add standard .gitignore for Perl modules
 
 2012-07-14 12:19  Lubomir Rintel
