@@ -1,10 +1,13 @@
 Revision history for Perl extension Authen::Captcha.
 
-2015-05-xx xx:xx  Paulo Custodio
+2015-xx-xx xx:xx  Paulo Custodio
 
 	* Fix #104697: Spelling in README
 	* Fix #93798:  pod encoding
 	* Fix #104698: Add standard .gitignore for Perl modules
+    * Fix #104718: Tests leave temporary directory behind
+    * Fix #79948: Broken Captcha Image on UI if generated code matches code in db
+    * Fix #39864: Allow selection of number of characters/numbers
 
 2012-07-14 12:19  Lubomir Rintel
 
