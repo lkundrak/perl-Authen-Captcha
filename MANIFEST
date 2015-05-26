@@ -43,10 +43,12 @@ Captcha/images/x.png
 Captcha/images/y.png
 Captcha/images/z.png
 Changes
-MANIFEST
-Makefile.PL
-README
 examples/README
 examples/wwwtest.cgi
 license.txt
+Makefile.PL
+MANIFEST
+README
 t/1.t
+t/rt_39864.t
+t/rt_79948.t
