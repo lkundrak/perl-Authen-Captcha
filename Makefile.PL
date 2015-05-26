@@ -7,6 +7,7 @@ WriteMakefile(
     'VERSION_FROM'	=> 'Captcha.pm', # finds $VERSION
     'PREREQ_PM'		=> {
 	                    'File::Spec'	=> '0.8',
+						'File::Path'	=> 0,
 	                    'File::Basename'	=> 0,
 	                    'String::Random'	=> 0,
 	                    'GD'	=> 0,

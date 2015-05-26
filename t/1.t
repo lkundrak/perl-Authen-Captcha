@@ -6,6 +6,7 @@
 # figure out where we are, and where we will be storing stuff
 use File::Basename;
 use File::Spec;
+use File::Path 'remove_tree';
 my $file = __FILE__;
 my $this_dir = dirname($file);
 my @this_dirs = File::Spec->splitdir( $this_dir );
@@ -17,7 +18,7 @@ my $temp_imagesdir = 'Captcha/images';
 
 use Test; # (tests => 28);
 
-plan tests => 32;
+plan tests => 33;
 
 use Authen::Captcha;
 ok(1); # If we made it this far, we are fine.
@@ -96,3 +97,5 @@ ok( $results,  1, "Failed on check_code, didn't return 1, but didn't return the 
 my $bad_results2 = $captcha2->check_code($code,$md5sum);
 ok( sub { return 1 if ($bad_results2 == -2) }, 1, "Failed on check_code: disabling keep_failures did not work right, it failed incorrectly" );
 
+# delete temp directories
+ok(remove_tree($temp_dir) > 0); # remove temp dir
