@@ -377,18 +377,27 @@ sub _save_code
 	close(DATA);
 	
 	my $new_data = "";
+	my $duplicate_md5 = 0;
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
 		my ($data_time,$data_token,$data_code) = $line =~ m/(^\d+)::([a-f0-9]{32})::(.*)$/
 			or next;
-		if ( (($current_time - $data_time) > ($self->expire())) ||
-		     ($data_token  eq $token) )
-		{	# remove expired captcha, or a dup
-			my $png_file = File::Spec->catfile($self->output_folder(),$data_token . ".png");
-			unlink($png_file) or carp("Can't remove png file [$png_file]\n");
-		} else {
+		if ( $current_time - $data_time > $self->expire() )
+		{	# expired, remove the line for non dupes only
+			if( $data_token ne $token ) 
+			{
+  				my $png_file = File::Spec->catfile($self->output_folder(), $data_token . ".png");
+				unlink($png_file) or carp("Can't remove png file [$png_file]\n");
+			}
+		}
+		else 
+		{
+			# not expired, keep the line
 			$new_data .= $line."\n";
+			if( $data_token eq $token ) {
+				$duplicate_md5 = 1; # do not write a new line below
+			}
 		}
 	}
 	
@@ -396,9 +405,12 @@ sub _save_code
 	warn "open File: $database_file\n" if($self->debug() >= 2);
 	open(DATA,">$database_file")  or die "Can't open File: $database_file\n";
 		warn "-->>" . $new_data . "\n" if($self->debug() >= 2);
-		warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
 		print DATA $new_data;
-		print DATA $current_time."::".$token."::".$code."\n";
+		unless ( $duplicate_md5 ) 
+		{
+			warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
+			print DATA $current_time."::".$token."::".$code."\n";
+		}
 	close(DATA);
 	$self->_release_lock();
 	warn "Close File: $database_file\n" if($self->debug() >= 2);
