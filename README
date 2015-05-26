@@ -11,7 +11,7 @@ SYNOPSIS
       # set the data_folder. contains flatfile db to maintain state
       $captcha->data_folder('/some/folder');
 
-      # set directory to hold publicly accessable images
+      # set directory to hold publicly accessible images
       $captcha->output_folder('/some/http/folder');
 
       # Alternitively, any of the methods to set variables may also be
@@ -22,25 +22,30 @@ SYNOPSIS
         output_folder => '/some/http/folder',
         );
 
-      # create a captcha. Image filename is "$md5sum.png"
-      my $md5sum = $captcha->generate_code($number_of_characters);
+      # create a captcha. Image filename is "$token.png"
+      my $token = $captcha->generate_code($number_of_characters);
 
       # check for a valid submitted captcha
       #   $code is the submitted letter combination guess from the user
-      #   $md5sum is the submitted md5sum from the user (that we gave them)
-      my $results = $captcha->check_code($code,$md5sum);
+      #   $token is the submitted token from the user (that we gave them)
+      my $results = $captcha->check_code($code,$token);
       # $results will be one of:
       #          1 : Passed
       #          0 : Code not checked (file error)
       #         -1 : Failed: code expired
       #         -2 : Failed: invalid code (not in database)
-      #         -3 : Failed: invalid code (code does not match crypt)
+      #         -3 : Failed: invalid code (code does not match token)
       ##############
+
+WARNING
+    The captcha produced by this module is rather weak compared to other
+    modules available. You are advised to update to GD::SecurityImage, which
+    provides API-compatible interface in GD::SecurityImage::AC module.
 
 ABSTRACT
     Authen::Captcha provides an object oriented interface to captcha file
-    creations. Captcha stands for Completely Automated Public Turing test
-    to tell Computers and Humans Apart. A Captcha is a program that can
+    creations. Captcha stands for Completely Automated Public Turing test to
+    tell Computers and Humans Apart. A Captcha is a program that can
     generate and grade tests that:
 
         - most humans can pass.
@@ -84,7 +89,6 @@ INSTALLATION
 
 METHODS
   MAIN METHODS
-
     "$captcha = Authen::Captcha->new();"
         This creates a new Captcha object. Optionally, you can pass in a
         hash with configuration information. See the method descriptions for
@@ -96,43 +100,55 @@ METHODS
              width =>  25, # optional. default 25
              height => 35, # optional. default 35
              images_folder => '/some/folder', # optional. default to lib dir
+             keep_failures => 0, # optional, defaults to 0(false)
+             numbers_percentage => 25, # optional, defaults to 25% numbers, 75% letters
              debug => 0, # optional. default 0
 
-    "$md5sum = $captcha->generate_code( $number_of_characters );"
-        Creates a captcha. Image filename is "$md5sum.png"
+    "$token = $captcha->generate_code( $number_of_characters );"
+        Creates a captcha. Image filename is "$token.png"
 
         It can also be called in array context to retrieve the string of
         characters used to generate the captcha (the string the user is
         expected to respond with). This is useful for debugging. ex.
 
-        "($md5sum,$chars) = $captcha->generate_code( $number_of_characters
+        "($token,$chars) = $captcha->generate_code( $number_of_characters
         );"
 
-    "$results = $captcha->check_code($code,$md5sum);"
-        check for a valid submitted captcha $code is the submitted letter
-        combination guess from the user $md5sum is the submitted md5sum from
-        the user (that we gave them) $results will be one of:
+    "$results = $captcha->check_code($code,$token);"
+        check for a valid submitted captcha
+
+        $code is the submitted letter combination guess from the user
+
+        $token is the submitted token from the user (that we gave them)
+
+        If the $code and $token are correct, the image file and database
+        entry will be removed.
+
+        If the $token matches one in the database, and "keep_failures" is
+        false (the default), the image file and database entry will be
+        removed to avoid repeated attempts on the same captcha.
+
+        $results will be one of:
 
             1 : Passed
             0 : Code not checked (file error)
            -1 : Failed: code expired
            -2 : Failed: invalid code (not in database)
-           -3 : Failed: invalid code (code does not match crypt)
+           -3 : Failed: invalid code (code does not match token)
 
   ACCESSOR METHODS
-
     "$captcha->data_folder( '/some/folder' );"
         Required. Sets the directory to hold the flatfile database that will
-        be used to store the current non-expired valid captcha md5sum's.
-        Must be writable by the process running the script (usually the web
+        be used to store the current non-expired valid captcha tokens. Must
+        be writable by the process running the script (usually the web
         server user, which is usually either "apache" or "http"), but should
-        not be accessable to the end user.
+        not be accessible to the end user.
 
     "$captcha->output_folder( '/some/folder' );"
         Required. Sets the directory to hold the generated Captcha image
-        files. This is usually a web accessable directory so that the user
+        files. This is usually a web accessible directory so that the user
         can view the images in here, but it doesn't have to be web
-        accessable (you could be attaching the images to an e-mail for some
+        accessible (you could be attaching the images to an e-mail for some
         verification, or some other Captcha implementation). Must be
         writable by the process running the script (usually the web server
         user, which is usually either "apache" or "http").
@@ -158,6 +174,18 @@ METHODS
         Optional. Number of pixels wide for the character graphics. Defaults
         to 35.
 
+    "$captcha->keep_failures( [0|1] );"
+        Optional. Defaults to zero. This option controls whether or not the
+        captcha will remain valid after a failed attempt. By default, we
+        only allow one attempt to solve it. This greatly reduces the
+        possibility that a bot could brute force a correct answer. Change it
+        at your own risk.
+
+    "$captcha->numbers_percentage( N );"
+        Optional. Defaults to 25. This option controls the percentage of
+        numbers in the random code. By default, the random code will contain
+        25% numbers and 75% letters.
+
     "$captcha->debug( [0|1|2] );"
         Optional. Sets the debugging bit. 1 turns it on, 0 turns it off. 2
         will print out verbose messages to STDERR.
@@ -181,11 +209,17 @@ AUTHORS
     making this more robust, and suitable for other applications, but much
     of the origonal code remains.
 
+    Fixes were reported and contributed by various people, see Changes file
+    for a complete list.
+
 COPYRIGHT AND LICENSE
     Copyright 2003, First Productions, Inc. (FIRSTPRODUCTIONS HUMAN TEST
     1.0)
 
     Copyright 2003 by Seth Jackson
+
+    Copyright 2012 by Paolo Rossi, Lubomir Rintel, Chris Dunlop, Gert
+    Schepens and Ernesto Hernández-Novich
 
     This library is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
