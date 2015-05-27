@@ -5,23 +5,17 @@
 
 # Reproduce RT #39864 https://rt.cpan.org/Ticket/Display.html?id=39864
 
-use File::Path 'make_path', 'remove_tree';
-
-my $temp_dir = "t/captcha_temp";
-my $temp_datadir = "$temp_dir/data";
-my $temp_outputdir = "$temp_dir/img";
-
 use Test; # (tests => 28);
-
-plan tests => 9;
+plan tests => 4;
 
 use Authen::Captcha;
+use Test::TempDir::Tiny;
+
 ok(1); # If we made it this far, we are fine.
 
 # make temp directories
-make_path($temp_datadir, $temp_outputdir);
-ok(-d $temp_datadir);
-ok(-d $temp_outputdir);
+my $temp_datadir 	= tempdir("data");
+my $temp_outputdir 	= tempdir("img");
 
 my $captcha = Authen::Captcha->new(
 		data_folder 		=> $temp_datadir,
@@ -50,11 +44,6 @@ $captcha = Authen::Captcha->new(
 );
 $ratio = numbers_ratio($captcha, 100);
 ok($ratio == 1);
-
-
-# delete temp directories
-ok(remove_tree($temp_dir) > 0); # remove temp dir
-
 
 
 sub numbers_ratio {

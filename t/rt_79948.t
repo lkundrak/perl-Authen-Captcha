@@ -5,26 +5,21 @@
 
 # Reproduce RT #79948 https://rt.cpan.org/Ticket/Display.html?id=79948
 
-use File::Path 'make_path', 'remove_tree';
+use Test; # (tests => 28);
+plan tests => 6;
 
 my $SEED = 23;		# make tests predictable
 my $EXPIRE = 600;
-my $temp_dir = "t/captcha_temp";
-my $temp_datadir = "$temp_dir/data";
-my $temp_outputdir = "$temp_dir/img";
-my $db_file = "$temp_datadir/codes.txt";
-
-use Test; # (tests => 28);
-
-plan tests => 9;
 
 use Authen::Captcha;
+use Test::TempDir::Tiny;
+
 ok(1); # If we made it this far, we are fine.
 
 # make temp directories
-make_path($temp_datadir, $temp_outputdir);
-ok(-d $temp_datadir);
-ok(-d $temp_outputdir);
+my $temp_datadir 	= tempdir("data");
+my $temp_outputdir 	= tempdir("img");
+my $db_file = "$temp_datadir/codes.txt";
 
 # cleanup database, if any
 unlink(<$temp_datadir/*>);
@@ -60,7 +55,3 @@ close($fh);
 srand($SEED);		
 ($md5sum, $code) = $captcha->generate_code('4');
 ok(-f "$temp_outputdir/$md5sum.png");
-
-
-# delete temp directories
-ok(remove_tree($temp_dir) > 0); # remove temp dir

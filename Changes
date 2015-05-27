@@ -8,6 +8,7 @@ Revision history for Perl extension Authen::Captcha.
     * Fix #104718: Tests leave temporary directory behind
     * Fix #79948: Broken Captcha Image on UI if generated code matches code in db
     * Fix #39864: Allow selection of number of characters/numbers
+	* Use Test::TempDir::Tiny to create temp directories for tests
 
 2012-07-14 12:19  Lubomir Rintel
 
