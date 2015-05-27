@@ -77,6 +77,15 @@ ok( $captcha->images_folder(), $temp_imagesdir, "Couldn't override the images_fo
 $captcha->images_folder($default_images_folder);
 ok( $captcha->images_folder(), $default_images_folder, "Couldn't set the images_folder back to $default_images_folder");
 
+ok( $captcha->numbers_percentage() == 25 );
+$captcha->numbers_percentage(50);
+ok( $captcha->numbers_percentage() == 50 );
+$captcha->numbers_percentage(0);
+ok( $captcha->numbers_percentage() == 0 );
+$captcha->numbers_percentage(100);
+ok( $captcha->numbers_percentage() == 100 );
+$captcha->numbers_percentage(25);
+
 my ($md5sum,$code) = $captcha->generate_code(5);
 ok( sub { return 1 if (length($code) == 5) }, 1, "didn't set the number of captcha characters correctly" );
 
