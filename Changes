@@ -1,5 +1,16 @@
 Revision history for Perl extension Authen::Captcha.
 
+2015-xx-xx xx:xx  Paulo Custodio
+
+	* Fix #104697: Spelling in README
+	* Fix #93798:  pod encoding
+	* Fix #104698: Add standard .gitignore for Perl modules
+    * Fix #104718: Tests leave temporary directory behind
+    * Fix #79948: Broken Captcha Image on UI if generated code matches code in db
+    * Fix #39864: Allow selection of number of characters/numbers
+	* Use Test::TempDir::Tiny to create temp directories for tests
+	* Add pod.t to test POD file, if Test::Pod exists
+
 2012-07-14 12:19  Lubomir Rintel
 
 	* Captcha.pm: Hardcode version, don't get it from CVS.  Advise to use

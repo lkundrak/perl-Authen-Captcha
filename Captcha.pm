@@ -65,6 +65,9 @@ sub new
 	my $keep_failures = (defined($opts{keep_failures}) && $opts{keep_failures})
 	                    ? 1 : 0;
 	$self->keep_failures($keep_failures);
+	my $numbers_percentage = defined($opts{numbers_percentage}) ? $opts{numbers_percentage} : 25;
+	$self->numbers_percentage($numbers_percentage);
+	
 	
 	# create a random seed if perl version less than 5.004
 	if ($] < 5.005)
@@ -114,6 +117,19 @@ sub keep_failures
 		return $self->{_keep_failures};
 	} else {
 		return $self->{_keep_failures};
+	}
+}
+
+sub numbers_percentage
+{
+	ref(my $self = shift) or croak "instance variable needed";
+	if (@_)
+	{
+		croak "numbers_percentage must be between 0 and 100" unless ($_[0] >= 0 && $_[0] <= 100);
+		$self->{_numbers_percentage} = $_[0];
+		return $self->{_numbers_percentage};
+	} else {
+		return $self->{_numbers_percentage};
 	}
 }
 
@@ -342,11 +358,11 @@ sub generate_random_string
 	for(my $i=0; $i < $length; $i++)
 	{ 
 		my $char;
-		my $list = int(rand 4) +1;
-		if ($list == 1)
-		{ # choose a number 1/4 of the time
+		my $list = int(rand 100);		# 0..99
+		if ($list < $self->numbers_percentage())
+		{ # choose a number xx% (default 25%) of the time
 			$char = int(rand 7)+50;
-		} else { # choose a letter 3/4 of the time
+		} else { # choose a letter xx% (default 75%) of the time
 			$char = int(rand 25)+97;
 		}
 		$char = chr($char);
@@ -377,18 +393,27 @@ sub _save_code
 	close(DATA);
 	
 	my $new_data = "";
+	my $duplicate_md5 = 0;
 	foreach my $line (@data) 
 	{
 		$line =~ s/\n//;
 		my ($data_time,$data_token,$data_code) = $line =~ m/(^\d+)::([a-f0-9]{32})::(.*)$/
 			or next;
-		if ( (($current_time - $data_time) > ($self->expire())) ||
-		     ($data_token  eq $token) )
-		{	# remove expired captcha, or a dup
-			my $png_file = File::Spec->catfile($self->output_folder(),$data_token . ".png");
-			unlink($png_file) or carp("Can't remove png file [$png_file]\n");
-		} else {
+		if ( $current_time - $data_time > $self->expire() )
+		{	# expired, remove the line for non dupes only
+			if( $data_token ne $token ) 
+			{
+  				my $png_file = File::Spec->catfile($self->output_folder(), $data_token . ".png");
+				unlink($png_file) or carp("Can't remove png file [$png_file]\n");
+			}
+		}
+		else 
+		{
+			# not expired, keep the line
 			$new_data .= $line."\n";
+			if( $data_token eq $token ) {
+				$duplicate_md5 = 1; # do not write a new line below
+			}
 		}
 	}
 	
@@ -396,9 +421,12 @@ sub _save_code
 	warn "open File: $database_file\n" if($self->debug() >= 2);
 	open(DATA,">$database_file")  or die "Can't open File: $database_file\n";
 		warn "-->>" . $new_data . "\n" if($self->debug() >= 2);
-		warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
 		print DATA $new_data;
-		print DATA $current_time."::".$token."::".$code."\n";
+		unless ( $duplicate_md5 ) 
+		{
+			warn "-->>" . $current_time . "::" . $token."::".$code."\n" if($self->debug() >= 2);
+			print DATA $current_time."::".$token."::".$code."\n";
+		}
 	close(DATA);
 	$self->_release_lock();
 	warn "Close File: $database_file\n" if($self->debug() >= 2);
@@ -547,6 +575,8 @@ sub version
 __END__
 # Below is stub documentation for your module. You'd better edit it!
 
+=encoding utf8
+
 =head1 NAME
 
 Authen::Captcha - Perl extension for creating captcha's to verify the human element in transactions.
@@ -656,6 +686,7 @@ See the method descriptions for more detail on what they mean.
    height => 35, # optional. default 35
    images_folder => '/some/folder', # optional. default to lib dir
    keep_failures => 0, # optional, defaults to 0(false)
+   numbers_percentage => 25, # optional, defaults to 25% numbers, 75% letters
    debug => 0, # optional. default 0
 
 =back
@@ -725,6 +756,12 @@ Optional. Number of pixels wide for the character graphics. Defaults to 35.
 =item C<$captcha-E<gt>keep_failures( [0|1] );>
 
 Optional. Defaults to zero. This option controls whether or not the captcha will remain valid after a failed attempt. By default, we only allow one attempt to solve it. This greatly reduces the possibility that a bot could brute force a correct answer. Change it at your own risk.
+
+=item C<$captcha-E<gt>numbers_percentage( N );>
+
+Optional. Defaults to 25. This option controls the percentage of numbers
+in the random code. By default, the random code will contain 25% numbers and 
+75% letters.
 
 =item C<$captcha-E<gt>debug( [0|1|2] );>
 

@@ -6,10 +6,11 @@ WriteMakefile(
     'NAME'		=> 'Authen::Captcha',
     'VERSION_FROM'	=> 'Captcha.pm', # finds $VERSION
     'PREREQ_PM'		=> {
-	                    'File::Spec'	=> '0.8',
-	                    'File::Basename'	=> 0,
-	                    'String::Random'	=> 0,
-	                    'GD'	=> 0,
+	                    'File::Spec'			=> 0.8,
+	                    'File::Basename'		=> 0,
+	                    'String::Random'		=> 0,
+	                    'GD'					=> 0,
+						'Test::TempDir::Tiny'	=> 0.004,
 	                   },
     ($] >= 5.008 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'Captcha.pm', # retrieve abstract from module

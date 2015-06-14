@@ -3,32 +3,25 @@
 
 #########################
 
-# figure out where we are, and where we will be storing stuff
-use File::Basename;
-use File::Spec;
-my $file = __FILE__;
-my $this_dir = dirname($file);
-my @this_dirs = File::Spec->splitdir( $this_dir );
-my $temp_dir = File::Spec->catdir(@this_dirs,'captcha_temp');
-my $temp_datadir = "$temp_dir/data";
-my $temp_outputdir = "$temp_dir/img";
+use Test; # (tests => 28);
+
+plan tests => 33;
+
 # we set this only for testing, it is not actually used
 my $temp_imagesdir = 'Captcha/images';
 
-use Test; # (tests => 28);
-
-plan tests => 32;
-
 use Authen::Captcha;
+use Test::TempDir::Tiny;
+
 ok(1); # If we made it this far, we are fine.
+
+# make temp directories
+my $temp_datadir 	= tempdir("data");
+my $temp_outputdir 	= tempdir("img");
+
 my $captcha = Authen::Captcha->new();
 ok( defined $captcha, 1, 'new() did not return anything' );
 ok( $captcha->isa('Authen::Captcha') );
-
-# make temp directories
-ok( (-e $temp_dir) || mkdir($temp_dir) ); # made temp dir
-ok( (-e $temp_datadir) || mkdir($temp_datadir) ); # made temp data dir
-ok( (-e $temp_outputdir) || mkdir($temp_outputdir) ); # made temp image dir
 
 my $captcha2 = Authen::Captcha->new(
 	debug    	=> 1,
@@ -76,6 +69,15 @@ ok( $captcha->images_folder(), $temp_imagesdir, "Couldn't override the images_fo
 $captcha->images_folder($default_images_folder);
 ok( $captcha->images_folder(), $default_images_folder, "Couldn't set the images_folder back to $default_images_folder");
 
+ok( $captcha->numbers_percentage() == 25 );
+$captcha->numbers_percentage(50);
+ok( $captcha->numbers_percentage() == 50 );
+$captcha->numbers_percentage(0);
+ok( $captcha->numbers_percentage() == 0 );
+$captcha->numbers_percentage(100);
+ok( $captcha->numbers_percentage() == 100 );
+$captcha->numbers_percentage(25);
+
 my ($md5sum,$code) = $captcha->generate_code(5);
 ok( sub { return 1 if (length($code) == 5) }, 1, "didn't set the number of captcha characters correctly" );
 
@@ -95,4 +97,3 @@ ok( $results,  1, "Failed on check_code, didn't return 1, but didn't return the 
 # we disabled keep_failures, so the check should fail
 my $bad_results2 = $captcha2->check_code($code,$md5sum);
 ok( sub { return 1 if ($bad_results2 == -2) }, 1, "Failed on check_code: disabling keep_failures did not work right, it failed incorrectly" );
-
